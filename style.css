@@ -354,6 +354,7 @@ html, body {
 body:not(.entered) #topbar,
 body:not(.entered) #planet-nav,
 body:not(.entered) #cam-panel,
+body:not(.entered) #music-btn,
 body:not(.entered) #touch-hint { opacity: 0 !important; }
 
 /* ---------------- 演示模式 ---------------- */
@@ -361,7 +362,47 @@ body.demo #topbar,
 body.demo #infocard,
 body.demo #hint,
 body.demo #cam-panel,
+body.demo #music-btn,
 body.demo #planet-nav { opacity: 0 !important; pointer-events: none !important; }
+
+/* ---------------- 背景音乐开关 ---------------- */
+#music-btn {
+  position: fixed;
+  left: 34px; bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px 7px 13px;
+  background: var(--panel);
+  border: 1px solid rgba(140, 170, 255, .22);
+  border-radius: 30px;
+  backdrop-filter: blur(8px);
+  color: var(--ink-dim);
+  font-family: var(--sans);
+  font-size: 11.5px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  z-index: 12;
+  transition: opacity .5s, color .3s, border-color .3s, background .3s;
+}
+#music-btn:hover { color: var(--ink); border-color: rgba(140, 170, 255, .48); }
+#music-btn .mb-icon { font-size: 15px; line-height: 1; position: relative; display: inline-block; }
+#music-btn.playing { color: #f0c674; border-color: rgba(240, 198, 116, .42); }
+#music-btn.playing .mb-icon { animation: mb-beat 1.15s ease-in-out infinite; }
+@keyframes mb-beat {
+  0%, 100% { transform: scale(1) rotate(-6deg); opacity: .82; }
+  50%      { transform: scale(1.22) rotate(6deg); opacity: 1; }
+}
+/* 静音：音符上划一道斜线，一眼看出是关着的 */
+#music-btn.muted .mb-icon { opacity: .45; }
+#music-btn.muted .mb-icon::after {
+  content: '';
+  position: absolute;
+  left: -2px; top: 50%;
+  width: 19px; height: 1px;
+  background: currentColor;
+  transform: rotate(-45deg);
+}
 
 /* ---------------- 摄像头错误提示 ---------------- */
 #cam-error {
@@ -593,6 +634,20 @@ body.demo #planet-nav { opacity: 0 !important; pointer-events: none !important; 
   #cam-status { font-size: 9px; padding: 3px 4px; letter-spacing: 0; }
   #cam-tip { font-size: 9px; top: 3px; }
 
+  /* 音乐开关：标题下方的空白处，避开右上摄像头与底部抽屉 */
+  #music-btn {
+    left: 14px;
+    top: calc(42px + env(safe-area-inset-top, 0px));
+    bottom: auto;
+    padding: 4px 10px 4px 9px;
+    gap: 5px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    border-radius: 20px;
+  }
+  #music-btn .mb-icon { font-size: 12px; }
+  #music-btn.muted .mb-icon::after { width: 15px; left: -2px; }
+
   #gesture-fx {
     font-size: 21px;
     letter-spacing: 4px;
@@ -663,6 +718,7 @@ body.demo #planet-nav { opacity: 0 !important; pointer-events: none !important; 
   #cam-panel.expanded { width: 150px; height: 112px; }
   #topbar { top: calc(8px + env(safe-area-inset-top, 0px)); }
   #topbar h1 { font-size: 14px; letter-spacing: 4px; }
+  #music-btn { top: calc(30px + env(safe-area-inset-top, 0px)); padding: 3px 9px 3px 8px; }
   #touch-hint { display: none; }
   #gesture-fx { font-size: 18px; }
 }

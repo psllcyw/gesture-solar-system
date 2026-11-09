@@ -29,6 +29,7 @@ const isCoarse = () => matchMedia('(pointer: coarse)').matches;
 function init() {
   // 先绑定 UI：即使 3D 初始化失败，按钮也不能变成“点了没反应”
   bindGate();
+  bindMusic();
   bindKeyboard();
   bindInfoCard();
   bindCamPanel();
@@ -94,6 +95,7 @@ function bindGate() {
 function enter() {
   if (enterRequested) return;
   enterRequested = true;
+  startMusic(true);            // 点击本身就是用户手势，浏览器允许这里起播
   startCamera();               // 与贴图加载并行，授权弹窗不必等画面
 
   if (sceneReady && loadRatio >= 0.9) { finishEnter(); return; }
@@ -118,6 +120,109 @@ function finishEnter() {
   gate.classList.add('hide');
   document.body.classList.add('entered');
   showTouchHint();
+}
+
+// ---------------- 背景音乐 ----------------
+// 浏览器的自动播放策略：页面一加载就 play() 会被拦，用户点击「进入」时起播才合法。
+// 所以整首歌在点击那一刻开始，正好给加载过程加点声音反馈。
+const MUSIC_VOL = 0.5;
+let musicWanted = true;
+let musicFade = null;
+
+function bindMusic() {
+  const audio = $('#bgm');
+  const btn = $('#music-btn');
+  if (!audio || !btn) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (audio.paused) startMusic(false);
+    else stopMusic();
+  });
+
+  audio.addEventListener('play', syncMusicUI);
+  audio.addEventListener('pause', syncMusicUI);
+  audio.addEventListener('error', () => {
+    btn.title = '音频加载失败（assets/audio/bgm.mp3）';
+    console.warn('背景音乐加载失败：', audio.error);
+    syncMusicUI();
+  });
+
+  // 切到后台先停，回来再续——避免切走以后还在后台响
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (!audio.paused) { musicWanted = true; audio.pause(); }
+    } else if (musicWanted && entered) {
+      startMusic(false);
+    }
+  });
+
+  syncMusicUI();
+}
+
+function startMusic(fade) {
+  const audio = $('#bgm');
+  if (!audio) return;
+  musicWanted = true;
+  clearInterval(musicFade);
+  musicFade = null;
+  if (fade) {
+    audio.volume = 0;          // 从静音淡入，避免突然一声
+    fadeVolume(MUSIC_VOL, 1600);
+  } else if (!audio.volume) {
+    audio.volume = MUSIC_VOL;
+  }
+  const p = audio.play();
+  if (p && p.catch) {
+    p.catch((err) => {
+      console.warn('背景音乐无法播放：', err);
+      syncMusicUI();
+    });
+  }
+  syncMusicUI();
+}
+
+function stopMusic() {
+  const audio = $('#bgm');
+  if (!audio) return;
+  musicWanted = false;
+  fadeVolume(0, 300);
+  setTimeout(() => {
+    if (!musicWanted) audio.pause();
+  }, 340);
+  syncMusicUI();
+}
+
+function toggleMusic() {
+  const audio = $('#bgm');
+  if (!audio) return;
+  if (audio.paused) startMusic(false);
+  else stopMusic();
+}
+
+function fadeVolume(target, ms) {
+  const audio = $('#bgm');
+  if (!audio) return;
+  clearInterval(musicFade);
+  const from = audio.volume;
+  const t0 = performance.now();
+  musicFade = setInterval(() => {
+    const k = Math.min(1, (performance.now() - t0) / ms);
+    audio.volume = clamp(from + (target - from) * k, 0, 1);
+    if (k >= 1) { clearInterval(musicFade); musicFade = null; }
+  }, 40);
+}
+
+function syncMusicUI() {
+  const audio = $('#bgm');
+  const btn = $('#music-btn');
+  if (!audio || !btn) return;
+  const playing = !audio.paused && !audio.ended;
+  btn.classList.toggle('playing', playing);
+  btn.classList.toggle('muted', !playing);
+  btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+  const label = btn.querySelector('.mb-label');
+  if (label) label.textContent = playing ? '音乐' : '已静音';
 }
 
 // ---------------- 摄像头授权 ----------------
@@ -314,6 +419,12 @@ function bindKeyboard() {
       case 'Home': case '0': case 'o': case 'O': showOverview(); popFx('太阳系全景'); break;
       case ' ': { const paused = solar.togglePause(); popFx(paused ? '星体运动已暂停' : '星体继续运动'); break; }
       case 'd': case 'D': toggleDemo(); break;
+      case 'm': case 'M': {
+        const wasPlaying = $('#bgm') ? !$('#bgm').paused : false;
+        toggleMusic();
+        popFx(wasPlaying ? '音乐已关闭' : '音乐播放中');
+        break;
+      }
       case 'Escape': if (demoMode) toggleDemo(); break;
     }
   });

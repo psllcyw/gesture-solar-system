@@ -18,11 +18,38 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 NO_CACHE_EXT = {'.html', '.htm', '.js', '.mjs', '.css', '.json', '.py'}
 # 这些是"素材"，体积大、几乎不变，可以放心缓存
 LONG_CACHE_EXT = {'.jpg', '.jpeg', '.png', '.webp', '.task', '.wasm', '.mp3', '.mp4'}
+# 媒体文件需要 Range 支持，否则浏览器只能整段下完才播，拖动进度也无效
+MEDIA_EXT = {'.mp3', '.mp4', '.m4a', '.ogg', '.wav', '.webm'}
+
+
+class _RangeReader:
+    """把文件从 start 起截取 length 字节，供 copyfile 分块读取。"""
+
+    def __init__(self, fp, length):
+        self.fp = fp
+        self.left = length
+
+    def read(self, n=-1):
+        if self.left <= 0:
+            return b''
+        if n is None or n < 0 or n > self.left:
+            n = self.left
+        data = self.fp.read(n)
+        self.left -= len(data)
+        return data
+
+    def close(self):
+        self.fp.close()
 
 
 class Handler(SimpleHTTPRequestHandler):
+    _ranged = False
+
     def end_headers(self):
         ext = os.path.splitext(self.path.split('?')[0])[1].lower()
+        if ext in MEDIA_EXT and not self._ranged:
+            # 告诉浏览器"可以按字节要"，播放器才会用 Range 分片请求
+            self.send_header('Accept-Ranges', 'bytes')
         if ext in NO_CACHE_EXT or ext == '':
             # no-store: 完全禁止缓存，确保改完代码刷新即生效
             self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
@@ -33,6 +60,46 @@ class Handler(SimpleHTTPRequestHandler):
         else:
             self.send_header('Cache-Control', 'no-cache')
         super().end_headers()
+
+    def send_head(self):
+        self._ranged = False
+        path = self.translate_path(self.path)
+        rng = self.headers.get('Range')
+        if not rng or not os.path.isfile(path):
+            return super().send_head()
+
+        try:
+            size = os.path.getsize(path)
+            spec = rng.split('=', 1)[1].split(',')[0].strip()
+            head, _, tail = spec.partition('-')
+            if head:
+                start = int(head)
+                end = int(tail) if tail else size - 1
+            else:                       # bytes=-N 表示最后 N 字节
+                start = max(0, size - int(tail))
+                end = size - 1
+        except (ValueError, IndexError):
+            return super().send_head()
+
+        if start >= size:
+            self.send_response(416)
+            self.send_header('Content-Range', f'bytes */{size}')
+            self.end_headers()
+            return None
+
+        end = min(end, size - 1)
+        length = end - start + 1
+        fp = open(path, 'rb')
+        fp.seek(start)
+
+        self._ranged = True
+        self.send_response(206)
+        self.send_header('Content-Type', self.guess_type(path))
+        self.send_header('Accept-Ranges', 'bytes')
+        self.send_header('Content-Range', f'bytes {start}-{end}/{size}')
+        self.send_header('Content-Length', str(length))
+        self.end_headers()
+        return _RangeReader(fp, length)
 
     def log_message(self, fmt, *args):
         # 静默正常请求，只报错误，避免控制台刷屏拖慢大文件加载

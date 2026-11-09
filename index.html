@@ -7,7 +7,7 @@
   <meta name="description" content="手势太阳系：打开网页即玩，无需下载安装。双手张合缩放、挥手切换星球、握拳拖拽转视角，八大行星真实天文贴图。">
   <title>手势太阳系 · 指尖漫游宇宙</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=20261109a">
+  <link rel="stylesheet" href="style.css?v=20261109b">
   <script type="importmap">
     { "imports": { "three": "./vendor/three/three.module.min.js" } }
   </script>
@@ -41,7 +41,7 @@
     <span class="hint-item">双手张合 = 缩放 · 单手上下推拉 = 缩放</span>
     <span class="hint-item">左右挥手 = 换星球 · 握拳拖动 = 转视角</span>
     <span class="hint-item">张掌停留 = 全景 · 握拳静止 = 暂停 · 划过手留星尘</span>
-    <span class="hint-item">键盘：← → 切换 · ↑ ↓ 缩放 · Home 全景 · 空格暂停 · D 演示</span>
+    <span class="hint-item">键盘：← → 切换 · ↑ ↓ 缩放 · Home 全景 · 空格暂停 · M 音乐 · D 演示</span>
   </div>
 
   <!-- 移动端提示 -->
@@ -62,6 +62,12 @@
   <!-- 术语解释气泡 -->
   <div id="term-pop"></div>
 
+  <!-- 背景音乐：点击「进入」本身就是用户手势，浏览器允许此时起播 -->
+  <audio id="bgm" src="assets/audio/bgm.mp3?v=20261109a" loop preload="auto"></audio>
+  <button id="music-btn" aria-label="背景音乐开关" aria-pressed="true" title="背景音乐（快捷键 M）">
+    <span class="mb-icon">♪</span><span class="mb-label">音乐</span>
+  </button>
+
   <!-- 进入页 -->
   <div id="gate">
     <div class="gate-inner">
@@ -75,10 +81,10 @@
         <span id="gl-text">正在点亮太阳系…</span>
       </div>
       <p class="gate-tip">进入后请允许摄像头授权 · 双手入画张合即可缩放 · 不开摄像头也能用键盘或手指操作</p>
-      <p class="gate-ver">BUILD 2026-11-09 · 移动适配版</p>
+      <p class="gate-ver">BUILD 2026-11-09 · 移动适配 + 背景音乐</p>
     </div>
   </div>
 
-  <script type="module" src="js/app.js?v=20261109a"></script>
+  <script type="module" src="js/app.js?v=20261109b"></script>
 </body>
 </html>
