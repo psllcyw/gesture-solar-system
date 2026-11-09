@@ -350,8 +350,10 @@ html, body {
   font-family: ui-monospace, Consolas, monospace !important;
 }
 
-/* 还没进入时，别让导航和摄像头预览从半透明进入页后面透出来 */
+/* 还没进入时，别让导航、科普卡、提示、摄像头预览从半透明进入页后面透出来 */
 body:not(.entered) #topbar,
+body:not(.entered) #infocard,
+body:not(.entered) #hint,
 body:not(.entered) #planet-nav,
 body:not(.entered) #cam-panel,
 body:not(.entered) #music-btn,
