@@ -8,6 +8,7 @@ desktop.ini
 
 # 测试产物
 _*.png
+_shots/
 !assets/**/*.png
 
 # 依赖

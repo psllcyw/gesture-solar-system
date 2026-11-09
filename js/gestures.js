@@ -31,6 +31,7 @@ export class GestureController {
     this.lastNorm = null;        // 相对增量基准
     this.history = [];
     this.coolUntil = 0;
+    this.swipeArmed = true;   // 挥手后必须先停稳手，才允许下一次挥手（防连跳）
     this.candidate = 'idle';
     this.candidateSince = 0;
     this.latched = null;
@@ -149,6 +150,7 @@ export class GestureController {
     this.dragging = false;
     this.fistAnchor = null;
     this.lastDrag = null;
+    this.swipeArmed = true;
   }
 
   processNoHand() {
@@ -162,12 +164,19 @@ export class GestureController {
     this.fistAnchor = null;
     this.lastDrag = null;
     this.mode = 'none';
+    this.swipeArmed = true;
+    this.cb.onHandSize?.(0, 0);
     this.cb.onLandmarks?.(null);
     this.cb.onState?.('none', 0, 0);
   }
 
   /** 独立出来便于自动化测试：直接输入关键点数组（1~2 只手） */
   processHands(hands, now) {
+    // 手掌长度（腕 → 中指根）= 手离镜头远近的尺度，用于取景提示
+    let sum = 0;
+    for (const h of hands) sum += dist(h[0], h[9]);
+    this.cb.onHandSize?.(sum / hands.length, hands.length);
+
     if (hands.length >= 2) {
       if (this.mode === 'two') { this.twoStreak = 2; this._processTwo(hands, now); return; }
       this.twoStreak += 1;
@@ -223,9 +232,20 @@ export class GestureController {
     this.history.push({ x: cx, y: cy, t: now });
     while (this.history.length > 2 && now - this.history[0].t > 0.28) this.history.shift();
 
+    // 冷却结束后手还得停稳一小会儿才重新武装：
+    // 手挥完常常顺带摆回原位，若不禁用会被同一次挥扫连续计数（体验者反馈的“连跳两颗”）
+    if (!this.swipeArmed && now > this.coolUntil && this.history.length >= 2) {
+      const first = this.history[0];
+      const still = Math.hypot(cx - first.x, cy - first.y) < GESTURE.swipeRearmStill;
+      if (still && now - first.t >= GESTURE.swipeRearmTime) {
+        this.swipeArmed = true;
+        this.history.length = 0;
+      }
+    }
+
     // 挥手允许张掌姿势（最自然），靠速度与方向区分停留
     const canSwipe = !this.dragging && !fist && extended >= 3 && pinch > 0.55;
-    if (canSwipe && now > this.coolUntil && this.history.length >= 3) {
+    if (canSwipe && this.swipeArmed && now > this.coolUntil && this.history.length >= 3) {
       const first = this.history[0];
       const elapsed = now - first.t;
       const dx = cx - first.x;
@@ -234,6 +254,7 @@ export class GestureController {
           Math.abs(dx) / elapsed >= GESTURE.swipeSpeed && Math.abs(dy) < 0.16) {
         const dir = dx < 0 ? 1 : -1; // 预览为镜像，视频 x 向左 = 用户向右挥
         this.coolUntil = now + GESTURE.swipeCooldown;
+        this.swipeArmed = false;
         this.history.length = 0;
         this.candidate = 'idle';
         this.latched = null;

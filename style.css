@@ -158,7 +158,7 @@ html, body {
 /* ---------------- 左下提示 ---------------- */
 #hint {
   position: fixed;
-  left: 34px; bottom: 30px;
+  left: 34px; bottom: 74px;   /* 抬到导航上方，避免与星球名叠字 */
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -230,15 +230,17 @@ html, body {
 /* ---------------- 进入页 ---------------- */
 #gate {
   position: fixed; inset: 0;
-  background: radial-gradient(ellipse at 50% 60%, #0a1230 0%, #030510 68%);
+  /* 带透明度：贴图还在加载时，背后的太阳已经能看见在转 */
+  background: radial-gradient(ellipse at 50% 58%, rgba(10, 18, 48, .84) 0%, rgba(3, 5, 16, .96) 70%);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 24px;
   z-index: 100;
   transition: opacity .9s ease, visibility .9s;
 }
 #gate.hide { opacity: 0; visibility: hidden; }
-.gate-inner { text-align: center; position: relative; }
+.gate-inner { text-align: center; position: relative; max-width: 640px; }
 .gate-orbit {
   position: absolute;
   top: 50%; left: 50%;
@@ -265,15 +267,52 @@ html, body {
   font-weight: 600;
   letter-spacing: 26px;
   text-indent: 26px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   text-shadow: 0 0 40px rgba(120, 160, 255, .4);
 }
-#gate p {
+/* 说清楚“不用装软件”——体验者转发后最常见的一句疑问 */
+.gate-kicker {
+  font-size: 12.5px;
+  letter-spacing: 3px;
+  color: rgba(126, 226, 160, .9);
+  margin-bottom: 24px;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .95), 0 0 24px rgba(0, 0, 0, .8);
+}
+.gate-sub {
   font-size: 14px;
   letter-spacing: 8px;
   text-indent: 8px;
   color: var(--ink-dim);
-  margin-bottom: 54px;
+  margin-bottom: 40px;
+}
+/* 进入页加载进度：点击后才出现，明确告诉用户在等什么 */
+#gate-load {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  transition: opacity .35s ease;
+}
+#gate.loading #enter-btn { display: none; }
+#gate.loading #gate-load { opacity: 1; height: auto; }
+.gl-bar {
+  width: 240px; height: 3px;
+  margin: 0 auto 12px;
+  background: rgba(140, 170, 255, .18);
+  border-radius: 3px;
+  overflow: hidden;
+}
+#gl-fill {
+  display: block;
+  width: 0; height: 100%;
+  background: linear-gradient(90deg, var(--accent), #f0c674);
+  border-radius: 3px;
+  transition: width .35s ease;
+}
+#gl-text {
+  display: inline-block;
+  font-size: 12.5px;
+  letter-spacing: 3px;
+  color: var(--ink-dim);
 }
 #enter-btn {
   font-family: var(--serif);
@@ -298,7 +337,8 @@ html, body {
   font-size: 12px !important;
   letter-spacing: 2px !important;
   text-indent: 2px !important;
-  color: rgba(232, 236, 244, .35) !important;
+  color: rgba(232, 236, 244, .48) !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .95);
 }
 
 /* 构建版本标记：用于确认浏览器加载的不是旧缓存 */
@@ -309,6 +349,12 @@ html, body {
   color: rgba(140, 170, 255, .38) !important;
   font-family: ui-monospace, Consolas, monospace !important;
 }
+
+/* 还没进入时，别让导航和摄像头预览从半透明进入页后面透出来 */
+body:not(.entered) #topbar,
+body:not(.entered) #planet-nav,
+body:not(.entered) #cam-panel,
+body:not(.entered) #touch-hint { opacity: 0 !important; }
 
 /* ---------------- 演示模式 ---------------- */
 body.demo #topbar,
@@ -354,3 +400,269 @@ body.demo #planet-nav { opacity: 0 !important; pointer-events: none !important; 
 }
 #cam-retry:hover { background: rgba(224, 92, 74, .35); }
 #cam-status.warn { color: #f0c674; }
+
+/* ---------------- 术语解释 ---------------- */
+.term {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: help;
+  border-bottom: 1px dashed rgba(224, 92, 74, .62);
+  transition: color .25s, border-color .25s;
+}
+.term:hover, .term:active { color: #f0c674; border-bottom-color: #f0c674; }
+.ic-gloss-tip {
+  display: none;
+  margin-top: 10px;
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  color: rgba(232, 236, 244, .32);
+}
+#term-pop {
+  position: fixed;
+  max-width: 300px;
+  padding: 12px 15px;
+  background: rgba(12, 20, 40, .97);
+  border: 1px solid rgba(140, 170, 255, .28);
+  border-radius: 8px;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, .6);
+  font-size: 12.5px;
+  line-height: 1.78;
+  color: rgba(232, 236, 244, .9);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
+  pointer-events: none;
+  z-index: 60;
+}
+#term-pop.show { opacity: 1; visibility: visible; transform: translateY(0); }
+#term-pop b {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--serif);
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #f0c674;
+}
+
+/* ---------------- 信息卡收起按钮（移动端显示） ---------------- */
+#ic-close {
+  display: none;
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 30px; height: 30px;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  line-height: 1;
+  color: var(--ink-dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* ---------------- 摄像头取景框与距离提示 ---------------- */
+.cam-frame {
+  position: absolute;
+  left: 18%; top: 15%;
+  width: 64%; height: 62%;
+  border: 1px dashed rgba(140, 170, 255, .32);
+  border-radius: 5px;
+  pointer-events: none;
+}
+#cam-tip {
+  position: absolute;
+  left: 0; right: 0; top: 5px;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #f0c674;
+  text-shadow: 0 1px 5px #000;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  padding: 0 4px;
+}
+#cam-tip.show { opacity: 1; }
+#cam-panel { cursor: pointer; }
+#cam-panel.expanded { width: 300px; height: 226px; }
+
+/* ---------------- 移动端提示（桌面隐藏） ---------------- */
+#touch-hint {
+  display: none;
+  position: fixed;
+  left: 0; right: 0;
+  top: 48px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--ink-dim);
+  padding: 0 20px;
+  z-index: 9;
+  pointer-events: none;
+  transition: opacity .8s;
+}
+
+/* ============================================================
+   移动端 / 竖屏适配
+   目标：科普卡不压星球、导航点得到、摄像头小窗看得清
+   ============================================================ */
+/* 竖屏手机；以及横屏但高度很矮的触屏设备 */
+@media (max-width: 820px), (pointer: coarse) and (max-height: 560px) {
+  /* 标题靠左：右上角要让给摄像头预览，避免两者叠在一起 */
+  #topbar {
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    left: 14px;
+    right: auto;
+    text-align: left;
+  }
+  #topbar h1 { font-size: 16px; letter-spacing: 5px; text-indent: 0; }
+  #subtitle { display: none; }
+  #hint { display: none; }
+  #touch-hint {
+    display: block;
+    top: calc(98px + env(safe-area-inset-top, 0px));
+    text-align: left;
+    padding: 0 16px;
+    font-size: 10.5px;
+  }
+
+  /* 科普卡：底部抽屉，最高 42vh，可滚动，带收起按钮 */
+  #infocard {
+    top: auto;
+    left: 10px; right: 10px;
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-height: 40vh;
+    overflow-y: auto;
+    padding: 14px 16px 14px;
+    border-radius: 10px;
+    transform: translateY(28px);
+    -webkit-overflow-scrolling: touch;
+  }
+  #infocard.show { transform: translateY(0); }
+  #ic-name { font-size: 25px; letter-spacing: 5px; }
+  .ic-type { font-size: 11px; letter-spacing: 2px; margin-bottom: 6px; }
+  .ic-en { font-size: 10.5px; letter-spacing: 3px; margin: 4px 0 10px; }
+  .ic-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 7px 14px;
+    padding-top: 10px;
+    margin-bottom: 10px;
+  }
+  .ic-stats .row { flex-direction: column; align-items: flex-start; gap: 1px; font-size: 11.5px; }
+  .ic-stats dt { font-size: 10.5px; letter-spacing: 1px; }
+  .ic-stats dd { text-align: left; margin-left: 0; font-size: 12.5px; color: #fff; }
+  .ic-fact { font-size: 11.5px; line-height: 1.7; padding-top: 9px; }
+  .ic-gloss-tip { display: block; }
+  #ic-close { display: flex; }
+
+  /* 导航：贴底横向滑动，不再被卡片压住 */
+  #planet-nav {
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    left: 0; right: 0;
+    transform: none;
+    gap: 15px;
+    padding: 0 14px 4px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #planet-nav::-webkit-scrollbar { display: none; }
+  .nav-item { flex: 0 0 auto; }
+  .nav-item .dot { width: 10px; height: 10px; }
+  .nav-item .label { font-size: 10px; letter-spacing: 1px; text-indent: 1px; }
+
+  /* 摄像头：右上角，避免和科普卡/导航抢位置 */
+  #cam-panel {
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    right: 10px;
+    bottom: auto;
+    width: 104px;
+    height: 78px;
+  }
+  #cam-panel.expanded {
+    width: 186px;
+    height: 140px;
+    z-index: 40;
+  }
+  #cam-status { font-size: 9px; padding: 3px 4px; letter-spacing: 0; }
+  #cam-tip { font-size: 9px; top: 3px; }
+
+  #gesture-fx {
+    font-size: 21px;
+    letter-spacing: 4px;
+    white-space: nowrap;
+  }
+
+  #cam-error {
+    left: 10px; right: 10px;
+    bottom: calc(98px + env(safe-area-inset-bottom, 0px));
+    transform: none;
+    max-width: none;
+    font-size: 12px;
+    padding: 12px 16px;
+    line-height: 1.7;
+  }
+
+  /* 进入页 */
+  .gate-orbit { width: 320px; height: 320px; margin: -160px 0 0 -160px; }
+  #gate h1 { font-size: 33px; letter-spacing: 13px; text-indent: 13px; margin-bottom: 14px; }
+  .gate-kicker { font-size: 11px; letter-spacing: 1px; margin-bottom: 20px; }
+  .gate-sub { font-size: 12px; letter-spacing: 4px; text-indent: 4px; margin-bottom: 30px; }
+  #enter-btn { padding: 14px 40px; font-size: 17px; letter-spacing: 6px; text-indent: 6px; }
+  .gate-tip {
+    max-width: 310px;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    line-height: 2;
+    font-size: 11px !important;
+  }
+  .gl-bar { width: 200px; }
+  #term-pop {
+    left: 12px !important;
+    right: 12px;
+    max-width: none;
+    width: auto;
+    font-size: 12px;
+  }
+}
+
+/* 手机横屏：卡片贴右下角固定宽度，把画面中央让给星球 */
+@media (max-height: 560px) and (pointer: coarse) {
+  #infocard {
+    top: auto;
+    left: auto;
+    right: 8px;
+    bottom: calc(54px + env(safe-area-inset-bottom, 0px));
+    width: 258px;
+    max-height: calc(100vh - 66px);
+    padding: 10px 13px 12px;
+  }
+  #ic-name { font-size: 20px; letter-spacing: 4px; }
+  .ic-type { font-size: 10px; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .ic-en { display: none; }
+  .ic-stats {
+    grid-template-columns: 1fr;
+    gap: 3px;
+    padding-top: 7px;
+    margin-bottom: 7px;
+  }
+  .ic-stats .row { flex-direction: row; align-items: baseline; justify-content: space-between; }
+  .ic-stats dt { font-size: 10px; }
+  .ic-stats dd { text-align: right; font-size: 11px; }
+  .ic-fact { font-size: 10.5px; line-height: 1.6; padding-top: 7px; }
+  .ic-gloss-tip { display: none; }
+  #planet-nav { bottom: calc(4px + env(safe-area-inset-bottom, 0px)); gap: 12px; }
+  .nav-item .label { font-size: 9px; }
+  #cam-panel { width: 84px; height: 63px; }
+  #cam-panel.expanded { width: 150px; height: 112px; }
+  #topbar { top: calc(8px + env(safe-area-inset-top, 0px)); }
+  #topbar h1 { font-size: 14px; letter-spacing: 4px; }
+  #touch-hint { display: none; }
+  #gesture-fx { font-size: 18px; }
+}

@@ -2,10 +2,12 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#030510">
+  <meta name="description" content="手势太阳系：打开网页即玩，无需下载安装。双手张合缩放、挥手切换星球、握拳拖拽转视角，八大行星真实天文贴图。">
   <title>手势太阳系 · 指尖漫游宇宙</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=20261102b">
+  <link rel="stylesheet" href="style.css?v=20261109a">
   <script type="importmap">
     { "imports": { "three": "./vendor/three/three.module.min.js" } }
   </script>
@@ -22,11 +24,13 @@
 
   <!-- 右侧信息卡 -->
   <aside id="infocard">
+    <button id="ic-close" aria-label="收起科普卡">×</button>
     <div class="ic-type" id="ic-type"></div>
     <h2 id="ic-name"></h2>
     <div class="ic-en" id="ic-en"></div>
     <dl class="ic-stats" id="ic-stats"></dl>
     <p class="ic-fact" id="ic-fact"></p>
+    <p class="ic-gloss-tip">带虚线的词点一下有解释</p>
   </aside>
 
   <!-- 底部星球导航 -->
@@ -40,28 +44,41 @@
     <span class="hint-item">键盘：← → 切换 · ↑ ↓ 缩放 · Home 全景 · 空格暂停 · D 演示</span>
   </div>
 
-  <!-- 右下摄像头小窗 -->
-  <div id="cam-panel">
+  <!-- 移动端提示 -->
+  <div id="touch-hint">手指拖动转视角 · 左右滑动切星球 · 双指捏合缩放</div>
+
+  <!-- 右下摄像头小窗（点一下放大） -->
+  <div id="cam-panel" title="点击放大 / 恢复预览">
     <video id="cam" autoplay muted playsinline></video>
     <canvas id="cam-overlay"></canvas>
+    <div class="cam-frame"></div>
+    <div id="cam-tip"></div>
     <div id="cam-status">摄像头未开启</div>
   </div>
 
   <!-- 手势反馈气泡 -->
   <div id="gesture-fx"></div>
 
+  <!-- 术语解释气泡 -->
+  <div id="term-pop"></div>
+
   <!-- 进入页 -->
   <div id="gate">
     <div class="gate-inner">
       <div class="gate-orbit"></div>
+      <p class="gate-kicker">打开网页即玩 · 无需下载安装 · 手机电脑都能用</p>
       <h1>手 势 太 阳 系</h1>
-      <p>以手为桨，漫游星辰大海</p>
+      <p class="gate-sub">以手为桨，漫游星辰大海</p>
       <button id="enter-btn">点 击 进 入</button>
-      <p class="gate-tip">进入后请允许摄像头授权 · 双手入画张合即可缩放 · 不开摄像头也可用键盘操作</p>
-      <p class="gate-ver">BUILD 2026-11-02 · 双手缩放版</p>
+      <div id="gate-load">
+        <div class="gl-bar"><i id="gl-fill"></i></div>
+        <span id="gl-text">正在点亮太阳系…</span>
+      </div>
+      <p class="gate-tip">进入后请允许摄像头授权 · 双手入画张合即可缩放 · 不开摄像头也能用键盘或手指操作</p>
+      <p class="gate-ver">BUILD 2026-11-09 · 移动适配版</p>
     </div>
   </div>
 
-  <script type="module" src="js/app.js?v=20261102b"></script>
+  <script type="module" src="js/app.js?v=20261109a"></script>
 </body>
 </html>

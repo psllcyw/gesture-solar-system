@@ -13,8 +13,8 @@ import { BODIES } from './data.js';
 const ATMOS = {
   venus:   [0xe8c78e, 0.52],
   earth:   [0x4f96ff, 0.82],
-  jupiter: [0xd8a878, 0.30],
-  saturn:  [0xe3d5a8, 0.27],
+  jupiter: [0xd8a878, 0.16],
+  saturn:  [0xe3d5a8, 0.16],
   uranus:  [0x8fd8dd, 0.50],
   neptune: [0x4169ff, 0.58],
 };
@@ -23,8 +23,11 @@ const lowRes = (url) => url?.replace(/(?:8k|4k)_/, '2k_');
 const clampPolar = (v) => Math.min(0.98, Math.max(0.42, v));
 
 export class SolarSystem {
-  constructor(container) {
+  constructor(container, opts = {}) {
     this.container = container;
+    this.opts = opts;
+    // 竖屏/小屏：初始画质降一档，后续由自适应继续调节
+    this.isMobile = matchMedia('(max-width: 820px), (pointer: coarse) and (max-height: 560px)').matches;
     this.bodies = [];
     this.time = 0;
     this.flyT = 1;
@@ -32,8 +35,12 @@ export class SolarSystem {
     this.overview = false;
     this.motionPaused = false;
     this.adaptive = true;
-    this.quality = 2;
+    this.quality = this.isMobile ? 1 : 2;
     this._fps = 60;
+    // 贴图加载进度：太阳+8 行星+地球云/夜光+土星环+月球+星空 = 14
+    this._texTotal = 14;
+    this._texLoaded = 0;
+    this._firstFrameDone = false;
     this._qualityClock = 0;
     this._lastQualityChange = 0;
     this._highToken = 0;
@@ -142,6 +149,7 @@ export class SolarSystem {
     const loader = new THREE.TextureLoader();
     loader.load('assets/textures/4k_stars.jpg', (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace;
+      this._texDone('sky');
       const sky = new THREE.Mesh(
         new THREE.SphereGeometry(2600, 48, 32),
         new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false })
@@ -311,7 +319,13 @@ export class SolarSystem {
   }
 
   _loadTex(loader, url) {
-    return this._configTex(loader.load(url));
+    return this._configTex(loader.load(url, () => this._texDone(url)));
+  }
+
+  _texDone(url) {
+    this._texLoaded += 1;
+    // 留 2% 给首帧编译，避免进度条到 100% 却还没画面
+    this.opts.onProgress?.(Math.min(0.98, this._texLoaded / this._texTotal), url);
   }
 
   _makeAtmosphere(radius, color, intensity) {
@@ -340,9 +354,10 @@ export class SolarSystem {
           vec3 n = normalize(vWorldNormal);
           vec3 viewDir = normalize(cameraPosition - vWorldPos);
           vec3 sunDir = normalize(-uPlanetCenter);
-          float rim = pow(1.0 - abs(dot(n, viewDir)), 3.1);
+          float rim = pow(1.0 - abs(dot(n, viewDir)), 3.8);
           float daylight = smoothstep(-0.28, 0.38, dot(n, sunDir));
-          float alpha = rim * uIntensity * (0.12 + 0.88 * daylight);
+          // 只在受光边缘出现辉光：暗面完全不留，避免大行星外面套一圈“假光环”
+          float alpha = rim * uIntensity * (0.02 + 0.98 * daylight);
           gl_FragColor = vec4(uColor * (0.55 + 0.45 * daylight), alpha);
         }`,
       transparent: true,
@@ -350,7 +365,8 @@ export class SolarSystem {
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
-    return new THREE.Mesh(new THREE.SphereGeometry(radius * 1.14, 64, 40), mat);
+    // 贴近球面（1.055）：太厚会像在行星外面套了一个圈
+    return new THREE.Mesh(new THREE.SphereGeometry(radius * 1.055, 64, 40), mat);
   }
 
   _makeEarthMaterial(loader, day, night) {
@@ -637,6 +653,18 @@ export class SolarSystem {
     return this.bodies[this.focusIndex ?? 0];
   }
 
+  // 竖屏（而不是“移动端”）：横屏手机上不需要为底部卡片让位
+  _portrait() {
+    return innerHeight > innerWidth * 1.05;
+  }
+
+  // 竖屏横向可视范围窄：按宽高比把相机拉远，保证行星完整入画
+  _framingScale() {
+    const a = innerWidth / innerHeight;
+    if (a >= 0.95) return 1;
+    return Math.min(1.85, Math.pow(1 / a, 0.52) * 0.88);
+  }
+
   _onResize() {
     this.camera.aspect = innerWidth / innerHeight;
     this.camera.updateProjectionMatrix();
@@ -674,7 +702,10 @@ export class SolarSystem {
     else focus.holder.getWorldPosition(this.focusPos);
 
     this.zoomFactor += (this.zoomTarget - this.zoomFactor) * Math.min(1, dt * 6.5);
-    const wantDist = (this.overview ? 430 : focus.def.focusDist) * this.zoomFactor;
+    // 太阳的「半径 / 相机距离」比行星大，竖屏下再退一截，避免日面把屏幕撑满
+    const sunExtra = this._portrait() && !this.overview && focus.def.emissive ? 1.5 : 1;
+    const wantDist = (this.overview ? 430 : focus.def.focusDist) * this.zoomFactor
+      * this._framingScale() * sunExtra;
     if (this.flyT < 1) this.flyT = Math.min(1, this.flyT + dt * 0.9);
     const flyEase = 1 - Math.pow(1 - this.flyT, 3);
 
@@ -700,6 +731,8 @@ export class SolarSystem {
       this.camera.position.copy(this.focusPos).add(targetOffset);
     }
     this.lookAt.copy(this.focusPos);
+    // 竖屏底部有科普卡和导航：视线中心略低于星球，球体整体上移，不被卡片压住
+    if (this._portrait()) this.lookAt.y -= wantDist * (this.overview ? 0.05 : 0.115);
     this.camera.lookAt(this.lookAt);
     this.camera.updateMatrixWorld();
 
@@ -719,6 +752,11 @@ export class SolarSystem {
     // 性能模式完全绕开 HDR 离屏渲染与全屏 OutputPass，而非只关 Bloom
     if (this.quality === 0) this.renderer.render(this.scene, this.camera);
     else this.composer.render();
+
+    if (!this._firstFrameDone) {
+      this._firstFrameDone = true;
+      this.opts.onFirstFrame?.();
+    }
 
     // 连续低帧才降级，避免加载瞬间误触发；高画质恢复有更长冷却
     if (this.adaptive && rawDt > 0 && rawDt < 0.5) {
