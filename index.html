@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手势太阳系 · 指尖漫游宇宙</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css?v=20261102b">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <!-- 3D 画布容器 -->
+  <div id="stage"></div>
+
+  <!-- 顶部标题 -->
+  <header id="topbar">
+    <h1>手 势 太 阳 系</h1>
+    <p id="subtitle">双手张合缩放 · 挥手切换 · 握拳拖拽 · 张掌全景</p>
+  </header>
+
+  <!-- 右侧信息卡 -->
+  <aside id="infocard">
+    <div class="ic-type" id="ic-type"></div>
+    <h2 id="ic-name"></h2>
+    <div class="ic-en" id="ic-en"></div>
+    <dl class="ic-stats" id="ic-stats"></dl>
+    <p class="ic-fact" id="ic-fact"></p>
+  </aside>
+
+  <!-- 底部星球导航 -->
+  <nav id="planet-nav"></nav>
+
+  <!-- 左下提示 -->
+  <div id="hint">
+    <span class="hint-item">双手张合 = 缩放 · 单手上下推拉 = 缩放</span>
+    <span class="hint-item">左右挥手 = 换星球 · 握拳拖动 = 转视角</span>
+    <span class="hint-item">张掌停留 = 全景 · 握拳静止 = 暂停 · 划过手留星尘</span>
+    <span class="hint-item">键盘：← → 切换 · ↑ ↓ 缩放 · Home 全景 · 空格暂停 · D 演示</span>
+  </div>
+
+  <!-- 右下摄像头小窗 -->
+  <div id="cam-panel">
+    <video id="cam" autoplay muted playsinline></video>
+    <canvas id="cam-overlay"></canvas>
+    <div id="cam-status">摄像头未开启</div>
+  </div>
+
+  <!-- 手势反馈气泡 -->
+  <div id="gesture-fx"></div>
+
+  <!-- 进入页 -->
+  <div id="gate">
+    <div class="gate-inner">
+      <div class="gate-orbit"></div>
+      <h1>手 势 太 阳 系</h1>
+      <p>以手为桨，漫游星辰大海</p>
+      <button id="enter-btn">点 击 进 入</button>
+      <p class="gate-tip">进入后请允许摄像头授权 · 双手入画张合即可缩放 · 不开摄像头也可用键盘操作</p>
+      <p class="gate-ver">BUILD 2026-11-02 · 双手缩放版</p>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js?v=20261102b"></script>
+</body>
+</html>

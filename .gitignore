@@ -1,0 +1,14 @@
+# 高清原图备份（不发布，体积 65MB）
+._hd_backup/
+
+# 系统杂项
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 测试产物
+_*.png
+!assets/**/*.png
+
+# 依赖
+node_modules/

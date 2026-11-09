@@ -1,0 +1,356 @@
+/* ============================================================
+   手势太阳系 · 样式
+   深空底色 + 宋体标题 + 朱砂点缀，与「甬上四季」一脉相承
+   ============================================================ */
+
+:root {
+  --ink: #e8ecf4;
+  --ink-dim: rgba(232, 236, 244, 0.55);
+  --accent: #e05c4a;          /* 朱砂红 */
+  --panel: rgba(10, 16, 32, 0.72);
+  --serif: "Noto Serif SC", "Source Han Serif SC", "STZhongsong", "SimSun", serif;
+  --sans: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #030510;
+  color: var(--ink);
+  font-family: var(--sans);
+  user-select: none;
+}
+
+#stage { position: fixed; inset: 0; }
+#stage canvas { display: block; }
+
+/* ---------------- 顶部标题 ---------------- */
+#topbar {
+  position: fixed; top: 34px; left: 0; right: 0;
+  text-align: center;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity .5s;
+}
+#topbar h1 {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 14px;
+  text-indent: 14px;
+  color: var(--ink);
+  text-shadow: 0 0 24px rgba(120, 160, 255, .35);
+}
+#subtitle {
+  margin-top: 8px;
+  font-size: 12.5px;
+  letter-spacing: 6px;
+  text-indent: 6px;
+  color: var(--ink-dim);
+}
+
+/* ---------------- 信息卡 ---------------- */
+#infocard {
+  position: fixed;
+  top: 50%; right: 42px;
+  transform: translateY(-50%) translateX(40px);
+  width: 320px;
+  padding: 30px 30px 26px;
+  background: var(--panel);
+  border: 1px solid rgba(140, 170, 255, .16);
+  border-radius: 4px;
+  backdrop-filter: blur(14px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .55s ease, transform .55s cubic-bezier(.2, .8, .25, 1);
+  z-index: 10;
+}
+#infocard.show {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+.ic-type {
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+#ic-name {
+  font-family: var(--serif);
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: 10px;
+  line-height: 1.1;
+}
+.ic-en {
+  font-size: 12px;
+  letter-spacing: 5px;
+  color: var(--ink-dim);
+  margin: 8px 0 20px;
+}
+.ic-stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px;
+  border-top: 1px solid rgba(140, 170, 255, .14);
+  padding-top: 18px;
+  margin-bottom: 18px;
+}
+.ic-stats .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13.5px;
+}
+.ic-stats dt { color: var(--ink-dim); letter-spacing: 2px; flex-shrink: 0; }
+.ic-stats dd { text-align: right; margin-left: 16px; }
+.ic-fact {
+  font-size: 13px;
+  line-height: 1.85;
+  color: rgba(232, 236, 244, .78);
+  border-top: 1px dashed rgba(140, 170, 255, .18);
+  padding-top: 16px;
+}
+
+/* ---------------- 底部导航 ---------------- */
+#planet-nav {
+  position: fixed;
+  bottom: 30px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 26px;
+  align-items: center;
+  z-index: 10;
+  transition: opacity .5s;
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  font-family: var(--sans);
+  transition: color .3s, transform .3s;
+}
+.nav-item .dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--dot-color, #888);
+  box-shadow: 0 0 0 0 rgba(255,255,255,0);
+  transition: box-shadow .3s, transform .3s;
+}
+.nav-item .label { font-size: 11.5px; letter-spacing: 3px; text-indent: 3px; }
+.nav-item:hover { color: var(--ink); }
+.nav-item.active {
+  color: var(--ink);
+  transform: translateY(-4px);
+}
+.nav-item.active .dot {
+  box-shadow: 0 0 12px 3px var(--dot-color, #fff);
+  transform: scale(1.25);
+}
+
+/* ---------------- 左下提示 ---------------- */
+#hint {
+  position: fixed;
+  left: 34px; bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--ink-dim);
+  z-index: 10;
+  transition: opacity .5s;
+}
+
+/* ---------------- 摄像头小窗 ---------------- */
+#cam-panel {
+  position: fixed;
+  right: 34px; bottom: 30px;
+  width: 200px; height: 150px;
+  border: 1px solid rgba(140, 170, 255, .22);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #0a0f1e;
+  z-index: 10;
+  transition: opacity .5s;
+}
+#cam {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  opacity: .82;
+}
+#cam-overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+#cam-status {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 5px 8px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-align: center;
+  color: var(--ink-dim);
+  background: rgba(5, 8, 18, .72);
+}
+#cam-status.ok { color: #7ee2a0; }
+#cam-status.pinch { color: #e98b78; }
+#cam-status.action { color: #f0c674; }
+
+/* ---------------- 手势反馈气泡 ---------------- */
+#gesture-fx {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--serif);
+  font-size: 42px;
+  letter-spacing: 8px;
+  color: var(--ink);
+  text-shadow: 0 0 30px rgba(140, 170, 255, .5);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+#gesture-fx.pop {
+  animation: fx-pop 1.1s ease forwards;
+}
+@keyframes fx-pop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.8); }
+  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  70%  { opacity: .9; }
+  100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+}
+
+/* ---------------- 进入页 ---------------- */
+#gate {
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at 50% 60%, #0a1230 0%, #030510 68%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: opacity .9s ease, visibility .9s;
+}
+#gate.hide { opacity: 0; visibility: hidden; }
+.gate-inner { text-align: center; position: relative; }
+.gate-orbit {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 560px; height: 560px;
+  margin: -280px 0 0 -280px;
+  border: 1px solid rgba(140, 170, 255, .12);
+  border-radius: 50%;
+  animation: gate-spin 26s linear infinite;
+  pointer-events: none;
+}
+.gate-orbit::before {
+  content: '';
+  position: absolute;
+  top: -4px; left: 50%;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 14px 3px rgba(224, 92, 74, .6);
+}
+@keyframes gate-spin { to { transform: rotate(360deg); } }
+#gate h1 {
+  font-family: var(--serif);
+  font-size: 52px;
+  font-weight: 600;
+  letter-spacing: 26px;
+  text-indent: 26px;
+  margin-bottom: 20px;
+  text-shadow: 0 0 40px rgba(120, 160, 255, .4);
+}
+#gate p {
+  font-size: 14px;
+  letter-spacing: 8px;
+  text-indent: 8px;
+  color: var(--ink-dim);
+  margin-bottom: 54px;
+}
+#enter-btn {
+  font-family: var(--serif);
+  font-size: 19px;
+  letter-spacing: 10px;
+  text-indent: 10px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid rgba(224, 92, 74, .65);
+  border-radius: 3px;
+  padding: 15px 58px;
+  cursor: pointer;
+  transition: background .3s, box-shadow .3s, transform .2s;
+}
+#enter-btn:hover {
+  background: rgba(224, 92, 74, .16);
+  box-shadow: 0 0 26px rgba(224, 92, 74, .3);
+  transform: translateY(-2px);
+}
+.gate-tip {
+  margin-top: 34px !important;
+  font-size: 12px !important;
+  letter-spacing: 2px !important;
+  text-indent: 2px !important;
+  color: rgba(232, 236, 244, .35) !important;
+}
+
+/* 构建版本标记：用于确认浏览器加载的不是旧缓存 */
+.gate-ver {
+  margin-top: 10px !important;
+  font-size: 10px !important;
+  letter-spacing: 2px !important;
+  color: rgba(140, 170, 255, .38) !important;
+  font-family: ui-monospace, Consolas, monospace !important;
+}
+
+/* ---------------- 演示模式 ---------------- */
+body.demo #topbar,
+body.demo #infocard,
+body.demo #hint,
+body.demo #cam-panel,
+body.demo #planet-nav { opacity: 0 !important; pointer-events: none !important; }
+
+/* ---------------- 摄像头错误提示 ---------------- */
+#cam-error {
+  position: fixed;
+  bottom: 100px; left: 50%;
+  transform: translateX(-50%);
+  max-width: 520px;
+  padding: 14px 22px;
+  font-size: 13px;
+  line-height: 1.8;
+  letter-spacing: 1px;
+  color: #f0c674;
+  background: var(--panel);
+  border: 1px solid rgba(240, 198, 116, .35);
+  border-radius: 4px;
+  z-index: 30;
+  opacity: 0;
+  transition: opacity .4s;
+  pointer-events: none;
+  text-align: center;
+}
+#cam-error.show { opacity: 1; pointer-events: auto; }
+.cam-err-msg { margin-bottom: 4px; }
+#cam-retry {
+  margin-top: 8px;
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 4px;
+  color: var(--ink);
+  background: rgba(224, 92, 74, .18);
+  border: 1px solid rgba(224, 92, 74, .55);
+  border-radius: 3px;
+  padding: 8px 26px;
+  cursor: pointer;
+  transition: background .3s;
+}
+#cam-retry:hover { background: rgba(224, 92, 74, .35); }
+#cam-status.warn { color: #f0c674; }
