@@ -141,5 +141,11 @@ python serve.py 8200
 
 ## 六、素材版权
 
-星球贴图来自 [Solar System Scope](https://www.solarsystemscope.com/textures/)，采用
+**星球贴图**来自 [Solar System Scope](https://www.solarsystemscope.com/textures/)，采用
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 授权，可自由使用与改编（保留出处即可）。
+
+**背景音乐**为第三方作品《We Never（律动纯享版）》，原唱 / 制作：拖鞋pd、LongTran Final、乔乔不熬夜。
+本项目仅将其作为**非商业性的场景演示**使用，版权归原作者及权利人所有，不做任何再分发、二次销售或改编声明。
+如果你要复用本仓库，请自行替换 `assets/audio/bgm.mp3` 为你拥有授权的音频（替换后把 `index.html` 里 `?v=` 的版本号加一即可）。
+
+若权利人认为此处使用不妥，可通过仓库 Issue 联系，我会立即移除该音频文件。
